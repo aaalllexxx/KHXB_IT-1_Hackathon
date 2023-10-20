@@ -10,5 +10,5 @@ class User(Base):
     name = Column(String(128), nullable=False)
     OAuth = Column(String(256))
     login = Column(String(128), nullable=False)
-    password = Column(String(256), nullable=False)
+    password = Column(String(256))
     group = Column(Integer, ForeignKey("group.id", ondelete="CASCADE"))
