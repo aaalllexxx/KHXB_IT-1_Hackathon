@@ -1,3 +1,5 @@
+import json
+
 from models.Base import Base
 from settings import *
 from models.User import User
@@ -5,6 +7,8 @@ from models.Access import Access
 from models.Auditory import Auditory
 from models.Lesson import Lesson
 from models.Group import Group
+from holidays_ru import check_holiday
+
 
 class Teacher:
     def __init__(self, name):
@@ -15,7 +19,7 @@ class Teacher:
         return f'Teacher({self.name})'
 
 
-class Lesson:
+class LessonData:
     def __init__(self, name, teacher, position, auditory=0):
         self.name = name
         self.teacher = teacher
@@ -100,11 +104,20 @@ class ScheduleGenerator:
     def generate_all(self) -> list[Schedule]:
         pass
 
-    def generate_for_group(self, group_name) -> Schedule:
-        pass
+    def generate_for_group(self, plan: dict[str, int]):
+        for months in range(12):
+            for day in range(month_list[months]):
+                if check_holiday(date(date.today().year, months, day)):
+                    continue
 
 
 if __name__ == "__main__":
     if env.get("MODE") == "TEST":
         Base.metadata.drop_all(db)
     Base.metadata.create_all(db)
+    with open("plan.json", "r") as file:
+        data = json.loads(file.read())
+    for group in list(data):
+        grp = Group(name=group)
+        session.add(grp)
+    session.commit()
