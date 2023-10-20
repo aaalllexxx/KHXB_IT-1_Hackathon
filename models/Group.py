@@ -7,3 +7,5 @@ class Group(Base):
     __tablename__ = "group"
     id = Column(Integer, primary_key=True)
     name = Column(String(64))
+    students = Column(Integer)
+    tag = Column(String(32))
