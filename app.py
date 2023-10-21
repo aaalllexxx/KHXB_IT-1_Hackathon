@@ -3,7 +3,6 @@ import os
 from fastapi import FastAPI
 from fastapi.encoders import jsonable_encoder
 
-from models.Group import Group
 from models.Lesson import Lesson
 from settings import *
 
@@ -12,14 +11,10 @@ app = FastAPI()
 
 @app.get("/get_lessons")
 def get_lessons():
-    groups = session.query(Group).all()
-    resp = {}
-
-    for group in groups:
-        lessons = session.query(Lesson).filter_by(group=group.id).all()
-        for l in lessons:
-            pass
-        resp[group.name] = None
+    lessons = session.query(Lesson).all()
+    resp = []
+    for l in lessons:
+        resp.append(jsonable_encoder(l))
     return resp
 
 
