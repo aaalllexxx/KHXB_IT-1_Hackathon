@@ -1,3 +1,4 @@
+import uuid
 from calendar import isleap
 from datetime import date
 
@@ -14,6 +15,7 @@ session = Session()
 db.connect()
 this_year = date.today().year
 max_pairs_per_day = 6
+jwt_secret = uuid.uuid4().hex
 month_list = [31, 29 if isleap(this_year) else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 days_in_year = 366 if isleap(this_year) else 365
 

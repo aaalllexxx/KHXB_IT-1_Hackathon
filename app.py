@@ -1,11 +1,14 @@
 import os
+import uuid
 from hashlib import sha256
 from typing import Optional
 
+import jwt
 from fastapi import FastAPI, Request
 from fastapi.encoders import jsonable_encoder
 
 from main import ScheduleGenerator
+from models.Access import Access
 from models.Group import Group
 from models.Lesson import Lesson
 from models.User import User
@@ -23,12 +26,30 @@ class TeacherReq(BaseModel):
     teacher: str
 
 
+class LoginReq(BaseModel):
+    login: str
+    password: str
+
+
 class RegisterReq(BaseModel):
     login: str
     password: str
     name: str
     OAuth: Optional[str] = ""
     group: str
+
+
+class LessonReq(BaseModel):
+    position: str
+    name: str
+    auditory: int
+    tag: str = ""
+    group: int
+    teacher: int
+
+
+class SessionReq(BaseModel):
+    token: str
 
 
 @app.post("/get_group_lessons")
@@ -97,6 +118,55 @@ def get_user_by_id(user_id: int):
     return jsonable_encoder(user)
 
 
+@app.post("/user/login")
+def login_user(data: LoginReq):
+    user = session.query(User).filter_by(login=data.login).first()
+    if user and sha256(data.password.encode()).hexdigest() == user.password:
+        token = jwt.encode({"user_id": user.id, "pass": user.password}, jwt_secret, algorithm="HS256")
+        return {"session": token}
+    return {"status_code": 403, "message": "Unauthorized"}
+
+
+@app.post("/user/login/oauth")
+def login_oauth():
+    pass
+
+
+@app.post("/user/session/check")
+def check_session(data: SessionReq):
+    if data.token:
+        data = jwt.decode(data.token, jwt_secret, algorithms=["HS256"])
+        if isinstance(data, dict):
+            user_id = data.get("user_id")
+            password = data.get("pass")
+            user = session.query(User).filter_by(id=user_id).first()
+            if user and user.password == password:
+                return {"status_code": 200, "message": "Success"}
+        return {"status_code": 403, "message": "Unauthorized"}
+    return {"status_code": 401, "message": "Bad request"}
+
+
+@app.put("/user/edit/{lesson_id}")
+async def edit_lesson(lesson_id: int, data: LessonReq):
+    lesson = session.query(Lesson).filter_by(id=lesson_id).first()
+    if not lesson:
+        return {"status_code": 404, "message": "Not found"}
+    if data.group:
+        lesson.group = data.group
+    if data.name:
+        lesson.name = data.name
+    if data.teacher:
+        lesson.teacher = data.teacher
+    if data.position:
+        lesson.position = data.position
+    if data.tag:
+        lesson.tag = data.tag
+    if data.auditory:
+        lesson.auditory = data.auditory
+    session.commit()
+    return {"status_code": 200, "message": "Success"}
+
+
 @app.delete("/user/delete/{user_id}")
 def delete_user_by_id(user_id: int):
     user = session.query(User).filter_by(id=user_id).first()
@@ -104,6 +174,12 @@ def delete_user_by_id(user_id: int):
         return {"status_code": 404, "message": "Not found"}
     session.delete(user)
     return {"status_code": 200, "message": "Success"}
+
+
+@app.get("/access/{ident}")
+def get_access(ident: int):
+    access = session.query(Access).filter_by(id=ident).first()
+    return jsonable_encoder(access)
 
 
 if __name__ == "__main__":

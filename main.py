@@ -135,6 +135,7 @@ class ScheduleGenerator:
         subjects = session.query(Subject).where(Subject.group == group.id).all()
         subjects = [sub.count for sub in subjects]
         if sum(subjects) > len(data_lesson):
+            session.query(Lesson).delete()
             return False
 
 
