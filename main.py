@@ -81,13 +81,13 @@ class ScheduleGenerator:
                             continue
 
                         auditories = session.query(Auditory).where(Auditory.size >= group.students).where(
-                            Auditory.tag == subject.tags).all()
+                            Auditory.tag == (subject.tags or None)).all()
                         auditories = sorted(auditories, key=lambda x: x.size)
                         if auditories:
-                            print(auditories, "---")
                             ind = 0
                             for a in range(len(auditories)):
-                                same_aud = session.query(Lesson).where(Lesson.auditory == auditories[a].id).all()
+                                same_aud = session.query(Lesson).where(Lesson.position.startswith(identifier)).where(
+                                    Lesson.auditory == auditories[a].id).all()
                                 if not same_aud:
                                     ind = a
                                     break
@@ -129,6 +129,11 @@ class ScheduleGenerator:
                             d = d - timedelta(days=1)
                             while check_holiday(d):
                                 d = d - timedelta(days=1)
+        data_lesson = session.query(Lesson).where(Lesson.group == group.id).all()
+        subjects = session.query(Subject).where(Subject.group == group.id).all()
+        subjects = [sub.count for sub in subjects]
+        if sum(subjects) > len(data_lesson):
+            return False
 
 
 if __name__ == "__main__":
