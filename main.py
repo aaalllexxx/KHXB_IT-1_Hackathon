@@ -20,6 +20,8 @@ class ScheduleGenerator:
         self.generated = []
 
     def generate_all(self):
+        session.query(Lesson).delete()
+        session.commit()
         groups = session.query(Group).all()
         for grp in groups:
             self.generate_for_group(grp.name)
