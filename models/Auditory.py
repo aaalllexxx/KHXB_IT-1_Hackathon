@@ -8,4 +8,5 @@ class Auditory(Base):
     id = Column(Integer, primary_key=True)
     size = Column(Integer, nullable=False)
     name = Column(String(120))
+    tag = Column(String(32))
 
